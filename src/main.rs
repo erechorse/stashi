@@ -17,6 +17,30 @@ pub struct APIcaller {
     secret: String,
 }
 
+
+fn main() {
+    println!("Hello, world!");
+}
+
+impl Config {
+    fn new(path: String) -> Result<Self, String> {
+        let mut f = match File::open(path) {
+            Ok(f) => f,
+            Err(e) => return Err(e.to_string()),
+        };
+        let mut contents = String::new();
+        match f.read_to_string(&mut contents) {
+            Err(e) => return Err(e.to_string()),
+            _ => (),
+        };
+        let config: Result<Config, toml::de::Error> = toml::from_str(&contents);
+        match config {
+            Ok(config) => return Ok(config),
+            Err(e) => return Err(e.to_string()),
+        };
+    }
+}
+
 impl APIcaller {
     fn new(config: Config) -> Self {
         Self {
@@ -27,35 +51,14 @@ impl APIcaller {
     }
 }
 
-fn main() {
-    println!("Hello, world!");
-}
-
-pub fn get_config(path: String) -> Result<Config, String> {
-    let mut f = match File::open(path) {
-        Ok(f) => f,
-        Err(e) => return Err(e.to_string()),
-    };
-    let mut contents = String::new();
-    match f.read_to_string(&mut contents) {
-        Err(e) => return Err(e.to_string()),
-        _ => (),
-    };
-    let config: Result<Config, toml::de::Error> = toml::from_str(&contents);
-    match config {
-        Ok(config) => return Ok(config),
-        Err(e) => return Err(e.to_string()),
-    };
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{get_config, Config};
+    use crate::Config;
 
     #[test]
-    fn test_get_config() {
+    fn test_config() {
         let config_path = "config_example.toml";
-        let config = get_config(config_path.to_string());
+        let config = Config::new(config_path.to_string());
         let test_case = Config {
             key: "your_api_key".to_string(),
             secret: "your_secret_key".to_string(),
