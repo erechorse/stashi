@@ -11,6 +11,22 @@ pub struct Config {
     pub amount: i32,
 }
 
+pub struct APIcaller {
+    endpoint: String,
+    key: String,
+    secret: String,
+}
+
+impl APIcaller {
+    fn new(config: Config) -> Self {
+        Self {
+            endpoint: "https://api.coin.z.com".to_string(),
+            key: config.key,
+            secret: config.secret,
+        }
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 }
@@ -47,4 +63,6 @@ mod tests {
         };
         assert_eq!(config, Ok(test_case));
     }
+
+    
 }
