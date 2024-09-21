@@ -1,5 +1,6 @@
 extern crate serde;
 extern crate toml;
+extern crate reqwest;
 
 use std::{fs::File, io::Read};
 use serde::Deserialize;
@@ -17,6 +18,12 @@ pub struct APIcaller {
     secret: String,
 }
 
+#[derive(Debug, PartialEq)]
+enum Status {
+    Maintenance,
+    Preopen,
+    Open,
+}
 
 fn main() {
     println!("Hello, world!");
@@ -49,11 +56,33 @@ impl APIcaller {
             secret: config.secret,
         }
     }
+    fn get_status(&self) -> Status {
+       let body = reqwest::blocking::get(
+            format!("{}/public/v1/status", self.endpoint)).unwrap().text().unwrap();
+
+        #[derive(Deserialize)]
+        struct JSONData {
+            pub status: String,
+        }
+        #[derive(Deserialize)]
+        struct JSONResponse {
+            status: i32,
+            data: JSONData,
+            responsetime: String,
+        }
+
+        let json: JSONResponse = serde_json::from_str(&body).unwrap();
+        match &*(json.data.status) {
+            "OPEN" => Status::Open,
+            "PREOPEN" => Status::Preopen,
+            _ => Status::Maintenance,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Config;
+    use crate::{APIcaller, Config, Status};
 
     #[test]
     fn test_config() {
@@ -67,5 +96,11 @@ mod tests {
         assert_eq!(config, Ok(test_case));
     }
 
+    #[test]
+    fn test_get_session() {
+        let config = Config::new("config_example.toml".to_string()).unwrap();
+        let api_caller = APIcaller::new(config);
+        assert_eq!(Status::Open, api_caller.get_status());
+    }
     
 }
