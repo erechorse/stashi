@@ -2,9 +2,9 @@ extern crate serde;
 extern crate toml;
 extern crate reqwest;
 
-use std::{fmt::format, fs::File, io::Read, time::{SystemTime, UNIX_EPOCH}};
+use std::{fs::File, io::Read, time::{SystemTime, UNIX_EPOCH}};
 use ring::hmac;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Deserialize)]
 pub struct Config {
@@ -62,11 +62,11 @@ impl APIcaller {
        let body = reqwest::blocking::get(
             format!("{}/public/v1/status", self.endpoint)).unwrap().text().unwrap();
 
-        #[derive(Deserialize)]
+        #[derive(Serialize, Deserialize)]
         struct JSONData {
             pub status: String,
         }
-        #[derive(Deserialize)]
+        #[derive(Serialize, Deserialize)]
         struct JSONResponse {
             status: i32,
             data: JSONData,
@@ -94,14 +94,13 @@ impl APIcaller {
             .unwrap()
             .text()
             .unwrap();
-        print!("{}", res);
-        #[derive(Deserialize)]
+        #[derive(Serialize, Deserialize)]
         struct JSONResponse {
             status: i32,
             data: JSONData,
             responsetime: String,
         }
-        #[derive(Deserialize)]
+        #[derive(Serialize, Deserialize)]
         #[allow(non_snake_case)]
         struct JSONData {
             actualProfitLoss: String,
