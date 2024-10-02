@@ -19,9 +19,9 @@ enum Status {
 }
 
 impl APIcaller {
-    fn new(config: Config) -> Self {
+    fn new(config: Config, endpoint: String) -> Self {
         Self {
-            endpoint: "https://api.coin.z.com".to_string(),
+            endpoint: endpoint,
             key: config.key,
             secret: config.secret,
         }
@@ -99,26 +99,45 @@ impl APIcaller {
 }
 
 mod tests {
+
     use crate::{api::{APIcaller, Status}, config::Config};
     
     #[test]
     fn test_get_session() {
+        let mut server = mockito::Server::new();
+        let path = "/public/v1/status";
+        let body = r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#;
+        let _mock = server.mock("GET", path)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body)
+            .create();
+
         let config = Config::new("config_example.toml".to_string()).unwrap();
-        let api_caller = APIcaller::new(config);
+        let api_caller = APIcaller::new(config, server.url()); 
         assert_eq!(Status::Open, api_caller.get_status());
     }
 
     #[test]
     fn test_get_capacity() {
+        let mut server = mockito::Server::new();
+        let path = "/private/v1/account/margin";
+        let body = r#"{"status":0,"data":{"actualProfitLoss":"68286188","availableAmount":"57262506","margin":"1021682","marginCallStatus":"NORMAL","marginRatio":"6683.6","profitLoss":"0","transferableAmount":"57262506"},"responsetime":"2019-03-19T02:15:06.051Z"}"#;
+        let _mock = server.mock("GET", path)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body)
+            .create();
+
         let config = Config::new("config.toml".to_string()).unwrap();
-        let api_caller = APIcaller::new(config);
-        assert_eq!(api_caller.get_capacity(), 10534);
+        let api_caller = APIcaller::new(config, server.url());
+        assert_eq!(api_caller.get_capacity(), 57262506);
     }
 
     #[test]
     fn test_sign() {
         let config = Config::new("config_example.toml".to_string()).unwrap();
-        let api_caller = APIcaller::new(config);
+        let api_caller = APIcaller::new(config, "".to_string());
 
         let time = 1727601179;
         let path = "/v1/account/margin";
