@@ -5,10 +5,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
 
-pub struct APIcaller {
+pub struct PublicAPICaller {
+    endpoint: String,
+}
+
+pub struct PrivateAPICaller {
     endpoint: String,
     key: String,
-    secret: String,
+    secret: String, 
 }
 
 #[derive(Debug, PartialEq)]
@@ -18,18 +22,15 @@ enum Status {
     Open,
 }
 
-impl APIcaller {
-    fn new(config: Config, endpoint: String) -> Self {
+impl PublicAPICaller {
+    fn new(root_url: String) -> Self {
         Self {
-            endpoint: endpoint,
-            key: config.key,
-            secret: config.secret,
+            endpoint: root_url + "/public",
         }
     }
-
     fn get_status(&self) -> Status {
        let body = reqwest::blocking::get(
-            format!("{}/public/v1/status", self.endpoint)).unwrap().text().unwrap();
+            format!("{}/v1/status", self.endpoint)).unwrap().text().unwrap();
 
         #[derive(Serialize, Deserialize)]
         struct JSONData {
@@ -49,13 +50,22 @@ impl APIcaller {
             _ => Status::Maintenance,
         }
     }
+}
 
+impl PrivateAPICaller {
+    fn new(config: Config, root_url: String) -> Self {
+        Self {
+            endpoint: root_url + "/private",
+            key: config.key,
+            secret: config.secret,
+        }
+    }
     fn get_capacity(&self) -> u32 {
         let path = "/v1/account/margin";
-        let time = APIcaller::get_timestamp();
+        let time = PrivateAPICaller::get_timestamp();
         let sign = self.sign(time, "GET".to_string(), path.to_string());
         let client = reqwest::blocking::Client::new();
-        let res = client.get(self.endpoint.to_string() + "/private" + path)
+        let res = client.get(self.endpoint.to_string() + path)
             .header("API-KEY", &self.key)
             .header("API-TIMESTAMP", time)
             .header("API-SIGN", sign)
@@ -99,9 +109,8 @@ impl APIcaller {
 }
 
 mod tests {
+    use crate::{api::{PrivateAPICaller, PublicAPICaller, Status}, config::Config};
 
-    use crate::{api::{APIcaller, Status}, config::Config};
-    
     #[test]
     fn test_get_session() {
         let mut server = mockito::Server::new();
@@ -113,8 +122,7 @@ mod tests {
             .with_body(body)
             .create();
 
-        let config = Config::new("config_example.toml".to_string()).unwrap();
-        let api_caller = APIcaller::new(config, server.url()); 
+        let api_caller = PublicAPICaller::new(server.url()); 
         assert_eq!(Status::Open, api_caller.get_status());
     }
 
@@ -130,14 +138,14 @@ mod tests {
             .create();
 
         let config = Config::new("config.toml".to_string()).unwrap();
-        let api_caller = APIcaller::new(config, server.url());
+        let api_caller = PrivateAPICaller::new(config, server.url());
         assert_eq!(api_caller.get_capacity(), 57262506);
     }
 
     #[test]
     fn test_sign() {
         let config = Config::new("config_example.toml".to_string()).unwrap();
-        let api_caller = APIcaller::new(config, "".to_string());
+        let api_caller = PrivateAPICaller::new(config, "".to_string());
 
         let time = 1727601179;
         let path = "/v1/account/margin";
