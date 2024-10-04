@@ -50,6 +50,32 @@ impl PublicAPICaller {
             _ => Status::Maintenance,
         }
     }
+    fn get_price(&self) -> u32 {
+       let body = reqwest::blocking::get(
+            format!("{}/v1/ticker?symbol=BTC", self.endpoint)).unwrap().text().unwrap();
+        
+        #[derive(Serialize, Deserialize)]
+        struct JSONData {
+            ask: String,
+            bid: String,
+            high: String,
+            last: String,
+            low: String,
+            symbol: String,
+            timestamp: String,
+            volume: String,
+        }
+        #[derive(Serialize, Deserialize)]
+        struct JSONResponse {
+            status: i32,
+            data: Vec<JSONData>,
+            responsetime: String,
+        }
+        println!("oh: {}", &body);
+
+        let json: JSONResponse = serde_json::from_str(&body).unwrap();
+        json.data[0].ask.parse().unwrap()
+    }
 }
 
 impl PrivateAPICaller {
@@ -143,6 +169,20 @@ mod tests {
         assert_eq!(api_caller.get_capacity(), 57262506);
     }
 
+    #[test]
+    fn test_get_price() {
+        let mut server = mockito::Server::new();
+        let path = "/public/v1/ticker?symbol=BTC";
+        let body = r#"{"status":0,"data":[{"ask":"750760","bid":"750600","high":"762302","last":"756662","low":"704874","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"#;
+        let _mock = server.mock("GET", path)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body)
+            .create();
+
+        let api_caller = PublicAPICaller::new(server.url());
+        assert_eq!(api_caller.get_price(), 750760);
+    }
     #[test]
     fn test_sign() {
         let config = Config::new("config_example.toml".to_string()).unwrap();
