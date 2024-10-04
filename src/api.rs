@@ -108,8 +108,9 @@ impl PrivateAPICaller {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use crate::{api::{PrivateAPICaller, PublicAPICaller, Status}, config::Config};
+    use super::*;
 
     #[test]
     fn test_get_session() {
