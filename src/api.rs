@@ -23,6 +23,13 @@ enum Status {
     Open,
 }
 
+#[derive(Serialize, Deserialize)]
+struct JSONResponse<T> {
+    status: i32,
+    data: T,
+    responsetime: String,
+}
+
 impl PublicAPICaller {
     fn new(root_url: String) -> Self {
         Self {
@@ -37,14 +44,8 @@ impl PublicAPICaller {
         struct JSONData {
             pub status: String,
         }
-        #[derive(Serialize, Deserialize)]
-        struct JSONResponse {
-            status: i32,
-            data: JSONData,
-            responsetime: String,
-        }
 
-        let json: JSONResponse = serde_json::from_str(&body)?;
+        let json: JSONResponse<JSONData> = serde_json::from_str(&body)?;
         Ok(match &*(json.data.status) {
             "OPEN" => Status::Open,
             "PREOPEN" => Status::Preopen,
@@ -66,14 +67,8 @@ impl PublicAPICaller {
             timestamp: String,
             volume: String,
         }
-        #[derive(Serialize, Deserialize)]
-        struct JSONResponse {
-            status: i32,
-            data: Vec<JSONData>,
-            responsetime: String,
-        }
 
-        let json: JSONResponse = serde_json::from_str(&body)?;
+        let json: JSONResponse<Vec<JSONData>> = serde_json::from_str(&body)?;
         Ok(json.data[0].ask.parse()?)
     }
 }
@@ -97,12 +92,7 @@ impl PrivateAPICaller {
             .header("API-SIGN", sign)
             .send()?
             .text()?;
-        #[derive(Serialize, Deserialize)]
-        struct JSONResponse {
-            status: i32,
-            data: JSONData,
-            responsetime: String,
-        }
+
         #[derive(Serialize, Deserialize)]
         #[allow(non_snake_case)]
         struct JSONData {
@@ -114,7 +104,7 @@ impl PrivateAPICaller {
             transferableAmount: String,
         }
 
-        let json: JSONResponse = serde_json::from_str(&res).unwrap();
+        let json: JSONResponse<JSONData> = serde_json::from_str(&res).unwrap();
         Ok(json.data.availableAmount.parse()?)
     }
     fn buy(&self, size: u32) -> Result<(), Box<dyn std::error::Error>> {
@@ -136,13 +126,7 @@ impl PrivateAPICaller {
             .send()?
             .text()?;
 
-        #[derive(Serialize, Deserialize)]
-        struct JSONResponse {
-            status: i32,
-            data: String,
-            responsetime: String,
-        }
-        let json: JSONResponse = serde_json::from_str(&res)?;
+        let json: JSONResponse<String> = serde_json::from_str(&res)?;
         match json.status {
             0 => Ok(()),
             _ => Err(format!("Error: Status code {}", json.status).into()),
@@ -168,7 +152,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_session() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_get_status() -> Result<(), Box<dyn std::error::Error>> {
         let mut server = mockito::Server::new();
         let path = "/public/v1/status";
         let body = r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#;
