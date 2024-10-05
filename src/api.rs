@@ -1,7 +1,8 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{time::{SystemTime, UNIX_EPOCH}, u32};
 
 use ring::hmac;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::config::Config;
 
@@ -119,6 +120,37 @@ impl PrivateAPICaller {
         let json: JSONResponse = serde_json::from_str(&res).unwrap();
         json.data.availableAmount.parse().unwrap()
     }
+    fn buy(&self, size: u32) -> Result<(), Box<dyn std::error::Error>> {
+        let path = "/v1/order";
+        let time = PrivateAPICaller::get_timestamp();
+        let parameters = json!({
+            "symbol": "BTC_JPY",
+            "side": "BUY",
+            "executionType": "MARKET",
+            "size": size.to_string(),
+        });
+        let sign = self.sign(time, "POST".to_string(), path.to_string());
+        let client = reqwest::blocking::Client::new();
+        let res = client.post(self.endpoint.to_string() + path)
+            .header("API-KEY", &self.key)
+            .header("API-TIMESTAMP", time)
+            .header("API-SIGN", sign)
+            .json(&parameters)
+            .send()?
+            .text()?;
+
+        #[derive(Serialize, Deserialize)]
+        struct JSONResponse {
+            status: i32,
+            data: String,
+            responsetime: String,
+        }
+        let json: JSONResponse = serde_json::from_str(&res)?;
+        match json.status {
+            0 => Ok(()),
+            _ => Err(format!("Error: Status code {}", json.status).into()),
+        }
+    }
 
     fn sign(&self, time: u64, method: String, path: String) -> String {
         let text = format!("{}{}{}", time, method, path);
@@ -182,6 +214,22 @@ mod tests {
 
         let api_caller = PublicAPICaller::new(server.url());
         assert_eq!(api_caller.get_price(), 750760);
+    }
+
+    #[test]
+    fn test_buy() -> Result<(), Box<dyn std::error::Error>> {
+        let mut server = mockito::Server::new();
+        let path = "/private/v1/order";
+        let body = r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#;
+        let _mock = server.mock("POST", path)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body)
+            .create();
+
+        let config = Config::new("config.toml".to_string()).unwrap();
+        let api_caller = PrivateAPICaller::new(config, server.url());
+        api_caller.buy(1000)
     }
     #[test]
     fn test_sign() {
