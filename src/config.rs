@@ -6,25 +6,16 @@ use serde::Deserialize;
 pub struct Config {
     pub key: String,
     pub secret: String,
-    pub amount: i32,
+    pub amount: u32,
 }
 
 impl Config {
-    pub fn new(path: String) -> Result<Self, String> {
-        let mut f = match File::open(path) {
-            Ok(f) => f,
-            Err(e) => return Err(e.to_string()),
-        };
+    pub fn new(path: String) -> Result<Self, Box<dyn std::error::Error>>  {
+        let mut f = File::open(path)?;
         let mut contents = String::new();
-        match f.read_to_string(&mut contents) {
-            Err(e) => return Err(e.to_string()),
-            _ => (),
-        };
-        let config: Result<Config, toml::de::Error> = toml::from_str(&contents);
-        match config {
-            Ok(config) => return Ok(config),
-            Err(e) => return Err(e.to_string()),
-        };
+        f.read_to_string(&mut contents)?;
+        let config: Config = toml::from_str(&contents)?;
+        Ok(config)
     }
 }
 
@@ -33,14 +24,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_config() {
+    fn test_config() -> Result<(), Box<dyn std::error::Error>> {
         let config_path = "config_example.toml";
-        let config = Config::new(config_path.to_string());
+        let config = Config::new(config_path.to_string())?;
         let test_case = Config {
             key: "your_api_key".to_string(),
             secret: "your_secret_key".to_string(),
             amount: 1000,
         };
-        assert_eq!(config, Ok(test_case));
+        if config == test_case {
+            Ok(())
+        } else {
+            Err(format!("The Config returns {:?}", config).into())
+        }
     }
 }
