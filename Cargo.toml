@@ -1,7 +1,12 @@
 [package]
 name = "stashi"
 version = "0.1.0"
+authors = ["erechorse"]
 edition = "2021"
+description = "A tool for accumulating Bitcoin using GMO Coin's API."
+readme = "README.md"
+repository = "https://github.com/erechorse/stashi"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
