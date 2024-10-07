@@ -107,7 +107,7 @@ impl PrivateAPICaller {
         let json: JSONResponse<JSONData> = serde_json::from_str(&res).unwrap();
         Ok(json.data.availableAmount.parse()?)
     }
-    fn buy(&self, size: u32) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn buy(&self, size: f64) -> Result<(), Box<dyn std::error::Error>> {
         let path = "/v1/order";
         let time = PrivateAPICaller::get_timestamp();
         let parameters = json!({
@@ -211,7 +211,7 @@ mod tests {
 
         let config = Config::new("config.toml".to_string()).unwrap();
         let api_caller = PrivateAPICaller::new(&config, server.url());
-        api_caller.buy(1000)
+        api_caller.buy(0.0001)
     }
     #[test]
     fn test_sign() {
