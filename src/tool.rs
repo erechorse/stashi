@@ -1,6 +1,6 @@
 use crate::{api::{PrivateAPICaller, PublicAPICaller, Status}, config::Config};
 
-fn check(config: &Config, root_url: &str) -> Result<f64, Box<dyn std::error::Error>> {
+pub fn check(config: &Config, root_url: &str) -> Result<f64, Box<dyn std::error::Error>> {
     let public = PublicAPICaller::new(root_url.to_string());
     let private = PrivateAPICaller::new(&config, root_url.to_string());
 
@@ -24,7 +24,7 @@ fn check(config: &Config, root_url: &str) -> Result<f64, Box<dyn std::error::Err
     Ok(btc)
 }
 
-fn run(config: &Config, root_url: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(config: &Config, root_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     let btc = check(&config, &root_url)?;
     let private = PrivateAPICaller::new(&config, root_url.to_string());
     private.buy(btc)?;
@@ -56,7 +56,7 @@ mod tests {
         let server = create_mock(server, "GET".to_string(), capacity.0.to_string(), capacity.1.to_string());
         let server = create_mock(server, "GET".to_string(), price.0.to_string(), price.1.to_string());
 
-        let config = Config::new("config_example.toml".to_string())?;
+        let config = Config::new("config_example.toml")?;
         match check(&config, &server.url()) {
             Ok(btc) => if btc == 0.0001 {
                 Ok(())
@@ -122,7 +122,7 @@ mod tests {
         let server = create_mock(server, "GET".to_string(), price.0.to_string(), price.1.to_string());
         let server = create_mock(server, "POST".to_string(), order.0.to_string(), order.1.to_string());
 
-        let config = Config::new("config_example.toml".to_string())?;
+        let config = Config::new("config_example.toml")?;
         run(&config, &server.url())?;
         Ok(())
     }

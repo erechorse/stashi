@@ -176,7 +176,7 @@ mod tests {
         let body = r#"{"status":0,"data":{"actualProfitLoss":"68286188","availableAmount":"57262506","margin":"1021682","marginCallStatus":"NORMAL","marginRatio":"6683.6","profitLoss":"0","transferableAmount":"57262506"},"responsetime":"2019-03-19T02:15:06.051Z"}"#;
         let server = create_mock(mockito::Server::new(), "GET".to_string(), path.to_string(), body.to_string());
 
-        let config = Config::new("config.toml".to_string())?;
+        let config = Config::new("config.toml")?;
         let api_caller = PrivateAPICaller::new(&config, server.url());
         match api_caller.get_capacity() {
             Ok(capacity) => match capacity {
@@ -209,13 +209,13 @@ mod tests {
         let body = r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#;
         let server = create_mock(mockito::Server::new(), "POST".to_string(), path.to_string(), body.to_string());
 
-        let config = Config::new("config.toml".to_string()).unwrap();
+        let config = Config::new("config.toml").unwrap();
         let api_caller = PrivateAPICaller::new(&config, server.url());
         api_caller.buy(0.0001)
     }
     #[test]
     fn test_sign() {
-        let config = Config::new("config_example.toml".to_string()).unwrap();
+        let config = Config::new("config_example.toml").unwrap();
         let api_caller = PrivateAPICaller::new(&config, "".to_string());
 
         let time = 1727601179;

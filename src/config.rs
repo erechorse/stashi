@@ -10,7 +10,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(path: String) -> Result<Self, Box<dyn std::error::Error>>  {
+    pub fn new(path: &str) -> Result<Self, Box<dyn std::error::Error>>  {
         let mut f = File::open(path)?;
         let mut contents = String::new();
         f.read_to_string(&mut contents)?;
@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn test_config() -> Result<(), Box<dyn std::error::Error>> {
         let config_path = "config_example.toml";
-        let config = Config::new(config_path.to_string())?;
+        let config = Config::new(config_path)?;
         let test_case = Config {
             key: "your_api_key".to_string(),
             secret: "your_secret_key".to_string(),
