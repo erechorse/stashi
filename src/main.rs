@@ -2,7 +2,7 @@ use std::env;
 
 use seahorse::{App, Command, Context};
 
-use stashi::{config::Config, tool};
+use stashi::{config::Config, tool::Tool};
 
 const ROOT_URL: &str = "https://api.coin.z.com";
 
@@ -33,7 +33,8 @@ fn check(c: &Context) {
             return;
         }
     };
-    let btc = match tool::check(&config, ROOT_URL) {
+    let tool = Tool::new(&config, ROOT_URL);
+    let btc = match tool.check(&config) {
         Ok(btc) => btc,
         Err(error) => {
             eprintln!("{}", error.to_string());

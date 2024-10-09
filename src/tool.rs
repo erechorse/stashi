@@ -1,34 +1,43 @@
 use crate::{api::{PrivateAPICaller, PublicAPICaller, Status}, config::Config};
 
-pub fn check(config: &Config, root_url: &str) -> Result<f64, Box<dyn std::error::Error>> {
-    let public = PublicAPICaller::new(root_url.to_string());
-    let private = PrivateAPICaller::new(&config, root_url.to_string());
-
-    let status = public.get_status()?;
-    match status {
-        Status::Open => (),
-        Status::Preopen => return Err(format!("Service is in pre-open.").into()),
-        Status::Maintenance => return Err(format!("Service is in maintenance").into()),
-    };
-    
-    let capacity = private.get_capacity()?;
-    let price = public.get_price()?;
-
-    let btc = ((&config.amount * 10_u32.pow(4) / price) as f64) / 10f64.powf(4.0);
-    if btc == 0.0 {
-        return Err(format!("The investment amount is less than the minimum transaction unit.").into());
-    } 
-    if capacity < btc as u32 {
-        return Err(format!("Not enough margin.").into());
-    }
-    Ok(btc)
+pub struct Tool {
+    public: PublicAPICaller,
+    private: PrivateAPICaller,
 }
 
-pub fn run(config: &Config, root_url: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let btc = check(&config, &root_url)?;
-    let private = PrivateAPICaller::new(&config, root_url.to_string());
-    private.buy(btc)?;
-    Ok(())
+impl Tool {
+    pub fn new(config: &Config, root_url: &str) -> Self {
+        Self {
+            public: PublicAPICaller::new(root_url.to_string()),
+            private: PrivateAPICaller::new(config, root_url.to_string()),
+        }
+    }
+    pub fn check(&self, config: &Config) -> Result<f64, Box<dyn std::error::Error>> {
+        let status = self.public.get_status()?;
+        match status {
+            Status::Open => (),
+            Status::Preopen => return Err(format!("Service is in pre-open.").into()),
+            Status::Maintenance => return Err(format!("Service is in maintenance").into()),
+        };
+        
+        let capacity = self.private.get_capacity()?;
+        let price = self.public.get_price()?;
+
+        let btc = ((&config.amount * 10_u32.pow(4) / price) as f64) / 10f64.powf(4.0);
+        if btc == 0.0 {
+            return Err(format!("The investment amount is less than the minimum transaction unit.").into());
+        } 
+        if capacity < btc as u32 {
+            return Err(format!("Not enough margin.").into());
+        }
+        Ok(btc)
+    }
+
+    pub fn run(&self, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+        let btc = self.check(&config)?;
+        self.private.buy(btc)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -57,7 +66,8 @@ mod tests {
         let server = create_mock(server, "GET".to_string(), price.0.to_string(), price.1.to_string());
 
         let config = Config::new("config_example.toml")?;
-        match check(&config, &server.url()) {
+        let tool = Tool::new(&config, &server.url());
+        match tool.check(&config) {
             Ok(btc) => if btc == 0.0001 {
                 Ok(())
             } else {
@@ -92,7 +102,8 @@ mod tests {
             amount: 500
         };
 
-        match check(&config, &server.url()) {
+        let tool = Tool::new(&config, &server.url());
+        match tool.check(&config) {
             Ok(_) => Err("An error should be thrown when the amount is below the minimum quantity.".to_string()),
             Err(_) => Ok(()),    
         } 
@@ -123,7 +134,8 @@ mod tests {
         let server = create_mock(server, "POST".to_string(), order.0.to_string(), order.1.to_string());
 
         let config = Config::new("config_example.toml")?;
-        run(&config, &server.url())?;
+        let tool = Tool::new(&config, &server.url());
+        tool.run(&config)?;
         Ok(())
     }
 }
