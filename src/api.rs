@@ -104,8 +104,11 @@ impl PrivateAPICaller {
             transferableAmount: String,
         }
 
-        let json: JSONResponse<JSONData> = serde_json::from_str(&res)?;
-        Ok(json.data.availableAmount.parse()?)
+        let json: Result<JSONResponse<JSONData>, serde_json::Error> = serde_json::from_str(&res);
+        return match json {
+            Ok(json) => Ok(json.data.availableAmount.parse()?),
+            Err(_) => Err("The secret key or API key is incorrect.".into())
+        };
     }
     pub fn buy(&self, size: f64) -> Result<(), Box<dyn std::error::Error>> {
         let path = "/v1/order";

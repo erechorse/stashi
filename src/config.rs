@@ -14,8 +14,11 @@ impl Config {
         let mut f = File::open(path)?;
         let mut contents = String::new();
         f.read_to_string(&mut contents)?;
-        let config: Config = toml::from_str(&contents)?;
-        Ok(config)
+        let config: Result<Config, toml::de::Error>= toml::from_str(&contents);
+        match config {
+            Ok(config) => return Ok(config),
+            Err(_) => return Err("The contents of the config file are invalid.".into()),
+        };
     }
 }
 
