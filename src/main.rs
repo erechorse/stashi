@@ -34,7 +34,7 @@ fn check(c: &Context) {
         }
     };
     let tool = Tool::new(&config, ROOT_URL);
-    let btc = match tool.check(&config) {
+    let btc = match tool.check() {
         Ok(btc) => btc,
         Err(error) => {
             eprintln!("{}", error.to_string());

@@ -3,6 +3,7 @@ use crate::{api::{PrivateAPICaller, PublicAPICaller, Status}, config::Config};
 pub struct Tool {
     public: PublicAPICaller,
     private: PrivateAPICaller,
+    amount: u32,
 }
 
 impl Tool {
@@ -10,9 +11,10 @@ impl Tool {
         Self {
             public: PublicAPICaller::new(root_url.to_string()),
             private: PrivateAPICaller::new(config, root_url.to_string()),
+            amount: config.amount,
         }
     }
-    pub fn check(&self, config: &Config) -> Result<f64, Box<dyn std::error::Error>> {
+    pub fn check(&self) -> Result<f64, Box<dyn std::error::Error>> {
         let status = self.public.get_status()?;
         match status {
             Status::Open => (),
@@ -23,7 +25,7 @@ impl Tool {
         let capacity = self.private.get_capacity()?;
         let price = self.public.get_price()?;
 
-        let btc = ((&config.amount * 10_u32.pow(4) / price) as f64) / 10f64.powf(4.0);
+        let btc = ((self.amount * 10_u32.pow(4) / price) as f64) / 10f64.powf(4.0);
         if btc == 0.0 {
             return Err(format!("The investment amount is less than the minimum transaction unit.").into());
         } 
@@ -33,8 +35,8 @@ impl Tool {
         Ok(btc)
     }
 
-    pub fn run(&self, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-        let btc = self.check(&config)?;
+    pub fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let btc = self.check()?;
         self.private.buy(btc)?;
         Ok(())
     }
@@ -67,7 +69,7 @@ mod tests {
 
         let config = Config::new("config_example.toml")?;
         let tool = Tool::new(&config, &server.url());
-        match tool.check(&config) {
+        match tool.check() {
             Ok(btc) => if btc == 0.0001 {
                 Ok(())
             } else {
@@ -103,7 +105,7 @@ mod tests {
         };
 
         let tool = Tool::new(&config, &server.url());
-        match tool.check(&config) {
+        match tool.check() {
             Ok(_) => Err("An error should be thrown when the amount is below the minimum quantity.".to_string()),
             Err(_) => Ok(()),    
         } 
@@ -135,7 +137,7 @@ mod tests {
 
         let config = Config::new("config_example.toml")?;
         let tool = Tool::new(&config, &server.url());
-        tool.run(&config)?;
+        tool.run()?;
         Ok(())
     }
 }
