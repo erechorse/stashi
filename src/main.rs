@@ -21,12 +21,17 @@ fn check_command() -> Command {
     Command::new("check")
         .description("Check if the investment is possible")
         .alias("c")
-        .usage("stashi check(c) [CONFIG.toml]")
+        .usage("stashi check(c) [Config.toml]")
         .action(check)
 }
 
 fn check(c: &Context) {
-    let config = match Config::new(&c.args[0]) {
+    let args = &c.args;
+    if args.len() == 0 {
+        eprintln!("Please specify the path to the configuration file.");
+        return;
+    }
+    let config = match Config::new(&args[0]) {
         Ok(config) => config,
         Err(error) => {
             eprintln!("{}", error.to_string());
