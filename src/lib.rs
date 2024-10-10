@@ -6,12 +6,25 @@ pub mod tool;
 pub mod test_utils {
     use mockito::ServerGuard;
 
-    pub fn create_mock(mut server: ServerGuard, method: String, path: String, body: String) -> ServerGuard {
-        server.mock(&method, &*path)
+    pub struct TestServer {
+        server: ServerGuard,
+    }
+
+    impl TestServer {
+        pub fn new(server: ServerGuard) -> Self {
+            Self {
+                server: server,
+            }
+        }
+        pub fn create_mock(&mut self, method: &str, path: &str, body: &str) {
+            self.server.mock(&method, path)
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(body)
             .create();
-        server
+        }
+        pub fn url(&self) -> String {
+            self.server.url()
+        }
     }
 }

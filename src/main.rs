@@ -12,7 +12,7 @@ fn main() {
         .description(env!("CARGO_PKG_DESCRIPTION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .version(env!("CARGO_PKG_VERSION"))
-        .usage("stashi [name]")
+        .usage("stashi [command]")
         .command(check_command());
     app.run(args);
 }

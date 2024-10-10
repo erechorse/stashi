@@ -44,28 +44,28 @@ impl Tool {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::create_mock;
+    use crate::test_utils::TestServer;
 
     use super::*;
 
     #[test]
     fn test_check() -> Result<(), Box<dyn std::error::Error>> {
-        let server = mockito::Server::new();
-        let status = (
+        let mut server = TestServer::new(mockito::Server::new());
+        server.create_mock(
+            "GET", 
             "/public/v1/status",
             r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#
         );
-        let capacity = (
+        server.create_mock(
+            "GET", 
             "/private/v1/account/margin",
             r#"{"status":0,"data":{"actualProfitLoss":"68286188","availableAmount":"57262506","margin":"1021682","marginCallStatus":"NORMAL","marginRatio":"6683.6","profitLoss":"0","transferableAmount":"57262506"},"responsetime":"2019-03-19T02:15:06.051Z"}"#
         );
-        let price = (
+        server.create_mock(
+            "GET", 
             "/public/v1/ticker?symbol=BTC",
             r#"{"status":0,"data":[{"ask":"9343889","bid":"9343880","high":"9343889","last":"9343889","low":"9343800","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"#
         );
-        let server = create_mock(server, "GET".to_string(), status.0.to_string(), status.1.to_string());
-        let server = create_mock(server, "GET".to_string(), capacity.0.to_string(), capacity.1.to_string());
-        let server = create_mock(server, "GET".to_string(), price.0.to_string(), price.1.to_string());
 
         let config = Config::new("config_example.toml")?;
         let tool = Tool::new(&config, &server.url());
@@ -81,22 +81,22 @@ mod tests {
 
     #[test]
     fn test_invalid_check() -> Result<(), String> {
-        let server = mockito::Server::new();
-        let status = (
+        let mut server = TestServer::new(mockito::Server::new());
+        server.create_mock(
+            "GET", 
             "/public/v1/status",
             r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#
         );
-        let capacity = (
+        server.create_mock(
+            "GET", 
             "/private/v1/account/margin",
             r#"{"status":0,"data":{"actualProfitLoss":"68286188","availableAmount":"57262506","margin":"1021682","marginCallStatus":"NORMAL","marginRatio":"6683.6","profitLoss":"0","transferableAmount":"57262506"},"responsetime":"2019-03-19T02:15:06.051Z"}"#
         );
-        let price = (
+        server.create_mock(
+            "GET", 
             "/public/v1/ticker?symbol=BTC",
             r#"{"status":0,"data":[{"ask":"9343889","bid":"9343880","high":"9343889","last":"9343889","low":"9343800","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"#
         );
-        let server = create_mock(server, "GET".to_string(), status.0.to_string(), status.1.to_string());
-        let server = create_mock(server, "GET".to_string(), capacity.0.to_string(), capacity.1.to_string());
-        let server = create_mock(server, "GET".to_string(), price.0.to_string(), price.1.to_string());
         
         let config = Config {
             key: "my_api_key".to_string(),
@@ -113,27 +113,27 @@ mod tests {
 
     #[test]
     fn run_check() -> Result<(), Box<dyn std::error::Error>> {
-        let server = mockito::Server::new();
-        let status = (
+        let mut server = TestServer::new(mockito::Server::new());
+        server.create_mock(
+            "GET", 
             "/public/v1/status",
             r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#
         );
-        let capacity = (
+        server.create_mock(
+            "GET", 
             "/private/v1/account/margin",
             r#"{"status":0,"data":{"actualProfitLoss":"68286188","availableAmount":"57262506","margin":"1021682","marginCallStatus":"NORMAL","marginRatio":"6683.6","profitLoss":"0","transferableAmount":"57262506"},"responsetime":"2019-03-19T02:15:06.051Z"}"#
         );
-        let price = (
+        server.create_mock(
+            "GET", 
             "/public/v1/ticker?symbol=BTC",
             r#"{"status":0,"data":[{"ask":"9343889","bid":"9343880","high":"9343889","last":"9343889","low":"9343800","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"#
         );
-        let order = (
+        server.create_mock(
+            "POST", 
             "/private/v1/order",
-            r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#,
+            r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#
         );
-        let server = create_mock(server, "GET".to_string(), status.0.to_string(), status.1.to_string());
-        let server = create_mock(server, "GET".to_string(), capacity.0.to_string(), capacity.1.to_string());
-        let server = create_mock(server, "GET".to_string(), price.0.to_string(), price.1.to_string());
-        let server = create_mock(server, "POST".to_string(), order.0.to_string(), order.1.to_string());
 
         let config = Config::new("config_example.toml")?;
         let tool = Tool::new(&config, &server.url());
