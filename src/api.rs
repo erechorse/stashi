@@ -31,9 +31,9 @@ struct JSONResponse<T> {
 }
 
 impl PublicAPICaller {
-    pub fn new(root_url: String) -> Self {
+    pub fn new(root_url: &str) -> Self {
         Self {
-            endpoint: root_url + "/public",
+            endpoint: format!("{}/public", root_url),
         }
     }
     pub fn get_status(&self) -> Result<Status, Box<dyn std::error::Error>> {
@@ -74,9 +74,9 @@ impl PublicAPICaller {
 }
 
 impl PrivateAPICaller {
-    pub fn new(config: &Config, root_url: String) -> Self {
+    pub fn new(config: &Config, root_url: &str) -> Self {
         Self {
-            endpoint: root_url + "/private",
+            endpoint: format!("{}/private", root_url),
             key: config.key.to_string(),
             secret: config.secret.to_string(),
         }
@@ -104,7 +104,7 @@ impl PrivateAPICaller {
             transferableAmount: String,
         }
 
-        let json: JSONResponse<JSONData> = serde_json::from_str(&res).unwrap();
+        let json: JSONResponse<JSONData> = serde_json::from_str(&res)?;
         Ok(json.data.availableAmount.parse()?)
     }
     pub fn buy(&self, size: f64) -> Result<(), Box<dyn std::error::Error>> {
@@ -162,7 +162,7 @@ mod tests {
             r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"# 
         );
 
-        let api_caller = PublicAPICaller::new(server.url()); 
+        let api_caller = PublicAPICaller::new(&server.url()); 
         match api_caller.get_status() {
             Ok(status) => match status {
                 Status::Open => Ok(()),
@@ -182,7 +182,7 @@ mod tests {
         );
 
         let config = Config::new("config.toml")?;
-        let api_caller = PrivateAPICaller::new(&config, server.url());
+        let api_caller = PrivateAPICaller::new(&config, &server.url());
         match api_caller.get_capacity() {
             Ok(capacity) => match capacity {
                 57262506 => Ok(()),
@@ -201,7 +201,7 @@ mod tests {
             r#"{"status":0,"data":[{"ask":"750760","bid":"750600","high":"762302","last":"756662","low":"704874","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"# 
         );
 
-        let api_caller = PublicAPICaller::new(server.url());
+        let api_caller = PublicAPICaller::new(&server.url());
         match api_caller.get_price() {
             Ok(price) => match price {
                 750760 => Ok(()),
@@ -221,13 +221,13 @@ mod tests {
         );
 
         let config = Config::new("config.toml").unwrap();
-        let api_caller = PrivateAPICaller::new(&config, server.url());
+        let api_caller = PrivateAPICaller::new(&config, &server.url());
         api_caller.buy(0.0001)
     }
     #[test]
     fn test_sign() {
         let config = Config::new("config_example.toml").unwrap();
-        let api_caller = PrivateAPICaller::new(&config, "".to_string());
+        let api_caller = PrivateAPICaller::new(&config, "");
 
         let time = 1727601179;
         let path = "/v1/account/margin";

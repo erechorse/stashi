@@ -9,8 +9,8 @@ pub struct Tool {
 impl Tool {
     pub fn new(config: &Config, root_url: &str) -> Self {
         Self {
-            public: PublicAPICaller::new(root_url.to_string()),
-            private: PrivateAPICaller::new(config, root_url.to_string()),
+            public: PublicAPICaller::new(root_url),
+            private: PrivateAPICaller::new(config, root_url),
             amount: config.amount,
         }
     }
