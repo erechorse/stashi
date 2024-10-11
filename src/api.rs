@@ -132,7 +132,7 @@ impl PrivateAPICaller {
         let json: JSONResponse<String> = serde_json::from_str(&res)?;
         match json.status {
             0 => Ok(()),
-            _ => Err(format!("Error: Status code {}", json.status).into()),
+            _ => Err(format!("Status code: {}", json.status).into()),
         }
     }
 

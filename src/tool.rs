@@ -35,10 +35,10 @@ impl Tool {
         Ok(btc)
     }
 
-    pub fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run(&self) -> Result<f64, Box<dyn std::error::Error>> {
         let btc = self.check()?;
         self.private.buy(btc)?;
-        Ok(())
+        Ok(btc)
     }
 }
 
