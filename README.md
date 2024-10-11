@@ -13,7 +13,7 @@ stashi is a CLI app that uses GMO Coin’s API to automate cryptocurrency accumu
 Install stashi using cargo:
 
 ```bash
-$ cargo install https://github.com/erechorse/stashi.git
+$ cargo install --git https://github.com/erechorse/stashi.git
 ```
 
 ## Configuration
