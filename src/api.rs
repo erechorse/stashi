@@ -84,7 +84,7 @@ impl PrivateAPICaller {
     pub fn get_capacity(&self) -> Result<u32, Box<dyn std::error::Error>> { 
         let path = "/v1/account/margin";
         let time = PrivateAPICaller::get_timestamp();
-        let sign = self.sign(time, "GET".to_string(), path.to_string());
+        let sign = self.sign(time, "GET", path, "");
         let client = reqwest::blocking::Client::new();
         let res = client.get(self.endpoint.to_string() + path)
             .header("API-KEY", &self.key)
@@ -114,12 +114,12 @@ impl PrivateAPICaller {
         let path = "/v1/order";
         let time = PrivateAPICaller::get_timestamp();
         let parameters = json!({
-            "symbol": "BTC_JPY",
+            "symbol": "BTC",
             "side": "BUY",
             "executionType": "MARKET",
             "size": size.to_string(),
         });
-        let sign = self.sign(time, "POST".to_string(), path.to_string());
+        let sign = self.sign(time, "POST", path, &parameters.to_string());
         let client = reqwest::blocking::Client::new();
         let res = client.post(self.endpoint.to_string() + path)
             .header("API-KEY", &self.key)
@@ -136,8 +136,8 @@ impl PrivateAPICaller {
         }
     }
 
-    fn sign(&self, time: u64, method: String, path: String) -> String {
-        let text = format!("{}{}{}", time, method, path);
+    fn sign(&self, time: u64, method: &str, path: &str, params: &str) -> String {
+        let text = format!("{}{}{}{}", time, method, path, params);
         let signed_key = hmac::Key::new(hmac::HMAC_SHA256, self.secret.as_bytes());
         hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref())
     }
@@ -237,7 +237,7 @@ mod tests {
         let method = "GET";
         let signature = "e8113c9454190c7cc8e3860012bae623bc36f2061b99660577b7c0bf22ea3f62";
 
-        assert_eq!(api_caller.sign(time, method.to_string(), path.to_string()), signature);
+        assert_eq!(api_caller.sign(time, method, path, ""), signature);
     }
 
 
