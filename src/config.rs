@@ -10,15 +10,15 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(path: &str) -> Result<Self, Box<dyn std::error::Error>>  {
+    pub fn new(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut f = File::open(path)?;
         let mut contents = String::new();
         f.read_to_string(&mut contents)?;
-        let config: Result<Config, toml::de::Error>= toml::from_str(&contents);
+        let config: Result<Config, toml::de::Error> = toml::from_str(&contents);
         match config {
-            Ok(config) => return Ok(config),
-            Err(_) => return Err("The contents of the config file are invalid.".into()),
-        };
+            Ok(config) => Ok(config),
+            Err(_) => Err("The contents of the config file are invalid.".into()),
+        }
     }
 }
 

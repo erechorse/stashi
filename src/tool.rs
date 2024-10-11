@@ -1,4 +1,7 @@
-use crate::{api::{PrivateAPICaller, PublicAPICaller, Status}, config::Config};
+use crate::{
+    api::{PrivateAPICaller, PublicAPICaller, Status},
+    config::Config,
+};
 
 pub struct Tool {
     public: PublicAPICaller,
@@ -18,19 +21,23 @@ impl Tool {
         let status = self.public.get_status()?;
         match status {
             Status::Open => (),
-            Status::Preopen => return Err(format!("Service is in pre-open.").into()),
-            Status::Maintenance => return Err(format!("Service is in maintenance").into()),
+            Status::Preopen => return Err("Service is in pre-open.".to_string().into()),
+            Status::Maintenance => return Err("Service is in maintenance".to_string().into()),
         };
-        
+
         let capacity = self.private.get_capacity()?;
         let price = self.public.get_price()?;
 
         let btc = ((self.amount * 10_u32.pow(4) / price) as f64) / 10f64.powf(4.0);
         if btc == 0.0 {
-            return Err(format!("The investment amount is less than the minimum transaction unit.").into());
-        } 
+            return Err(
+                "The investment amount is less than the minimum transaction unit."
+                    .to_string()
+                    .into(),
+            );
+        }
         if capacity < btc as u32 {
-            return Err(format!("Not enough margin.").into());
+            return Err("Not enough margin.".to_string().into());
         }
         Ok(btc)
     }
@@ -52,9 +59,9 @@ mod tests {
     fn test_check() -> Result<(), Box<dyn std::error::Error>> {
         let mut server = TestServer::new(mockito::Server::new());
         server.create_mock(
-            "GET", 
+            "GET",
             "/public/v1/status",
-            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#
+            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#,
         );
         server.create_mock(
             "GET", 
@@ -70,10 +77,12 @@ mod tests {
         let config = Config::new("config_example.toml")?;
         let tool = Tool::new(&config, &server.url());
         match tool.check() {
-            Ok(btc) => if btc == 0.0001 {
-                Ok(())
-            } else {
-                Err(format!("The investment amount should be 0.0001.").into())
+            Ok(btc) => {
+                if btc == 0.0001 {
+                    Ok(())
+                } else {
+                    Err("The investment amount should be 0.0001.".to_string().into())
+                }
             }
             Err(error) => Err(error),
         }
@@ -83,9 +92,9 @@ mod tests {
     fn test_invalid_check() -> Result<(), String> {
         let mut server = TestServer::new(mockito::Server::new());
         server.create_mock(
-            "GET", 
+            "GET",
             "/public/v1/status",
-            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#
+            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#,
         );
         server.create_mock(
             "GET", 
@@ -97,27 +106,30 @@ mod tests {
             "/public/v1/ticker?symbol=BTC",
             r#"{"status":0,"data":[{"ask":"9343889","bid":"9343880","high":"9343889","last":"9343889","low":"9343800","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"#
         );
-        
+
         let config = Config {
             key: "my_api_key".to_string(),
             secret: "my_secret_key".to_string(),
-            amount: 500
+            amount: 500,
         };
 
         let tool = Tool::new(&config, &server.url());
         match tool.check() {
-            Ok(_) => Err("An error should be thrown when the amount is below the minimum quantity.".to_string()),
-            Err(_) => Ok(()),    
-        } 
-    } 
+            Ok(_) => Err(
+                "An error should be thrown when the amount is below the minimum quantity."
+                    .to_string(),
+            ),
+            Err(_) => Ok(()),
+        }
+    }
 
     #[test]
     fn run_check() -> Result<(), Box<dyn std::error::Error>> {
         let mut server = TestServer::new(mockito::Server::new());
         server.create_mock(
-            "GET", 
+            "GET",
             "/public/v1/status",
-            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#
+            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#,
         );
         server.create_mock(
             "GET", 
@@ -130,9 +142,9 @@ mod tests {
             r#"{"status":0,"data":[{"ask":"9343889","bid":"9343880","high":"9343889","last":"9343889","low":"9343800","symbol":"BTC","timestamp":"2018-03-30T12:34:56.789Z","volume":"194785.8484"}],"responsetime":"2019-03-19T02:15:06.014Z"}"#
         );
         server.create_mock(
-            "POST", 
+            "POST",
             "/private/v1/order",
-            r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#
+            r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#,
         );
 
         let config = Config::new("config_example.toml")?;

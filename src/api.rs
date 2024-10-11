@@ -1,4 +1,7 @@
-use std::{time::{SystemTime, UNIX_EPOCH}, u32};
+use std::{
+    time::{SystemTime, UNIX_EPOCH},
+    u32,
+};
 
 use ring::hmac;
 use serde::{Deserialize, Serialize};
@@ -13,7 +16,7 @@ pub struct PublicAPICaller {
 pub struct PrivateAPICaller {
     endpoint: String,
     key: String,
-    secret: String, 
+    secret: String,
 }
 
 #[derive(Debug, PartialEq)]
@@ -37,8 +40,7 @@ impl PublicAPICaller {
         }
     }
     pub fn get_status(&self) -> Result<Status, Box<dyn std::error::Error>> {
-       let body = reqwest::blocking::get(
-            format!("{}/v1/status", self.endpoint))?.text()?;
+        let body = reqwest::blocking::get(format!("{}/v1/status", self.endpoint))?.text()?;
 
         #[derive(Serialize, Deserialize)]
         struct JSONData {
@@ -53,9 +55,9 @@ impl PublicAPICaller {
         })
     }
     pub fn get_price(&self) -> Result<u32, Box<dyn std::error::Error>> {
-       let body = reqwest::blocking::get(
-            format!("{}/v1/ticker?symbol=BTC", self.endpoint))?.text()?;
-        
+        let body =
+            reqwest::blocking::get(format!("{}/v1/ticker?symbol=BTC", self.endpoint))?.text()?;
+
         #[derive(Serialize, Deserialize)]
         struct JSONData {
             ask: String,
@@ -81,12 +83,13 @@ impl PrivateAPICaller {
             secret: config.secret.to_string(),
         }
     }
-    pub fn get_capacity(&self) -> Result<u32, Box<dyn std::error::Error>> { 
+    pub fn get_capacity(&self) -> Result<u32, Box<dyn std::error::Error>> {
         let path = "/v1/account/margin";
         let time = PrivateAPICaller::get_timestamp();
         let sign = self.sign(time, "GET", path, "");
         let client = reqwest::blocking::Client::new();
-        let res = client.get(self.endpoint.to_string() + path)
+        let res = client
+            .get(self.endpoint.to_string() + path)
             .header("API-KEY", &self.key)
             .header("API-TIMESTAMP", time)
             .header("API-SIGN", sign)
@@ -105,10 +108,10 @@ impl PrivateAPICaller {
         }
 
         let json: Result<JSONResponse<JSONData>, serde_json::Error> = serde_json::from_str(&res);
-        return match json {
+        match json {
             Ok(json) => Ok(json.data.availableAmount.parse()?),
-            Err(_) => Err("The secret key or API key is incorrect.".into())
-        };
+            Err(_) => Err("The secret key or API key is incorrect.".into()),
+        }
     }
     pub fn buy(&self, size: f64) -> Result<(), Box<dyn std::error::Error>> {
         let path = "/v1/order";
@@ -121,7 +124,8 @@ impl PrivateAPICaller {
         });
         let sign = self.sign(time, "POST", path, &parameters.to_string());
         let client = reqwest::blocking::Client::new();
-        let res = client.post(self.endpoint.to_string() + path)
+        let res = client
+            .post(self.endpoint.to_string() + path)
             .header("API-KEY", &self.key)
             .header("API-TIMESTAMP", time)
             .header("API-SIGN", sign)
@@ -144,8 +148,10 @@ impl PrivateAPICaller {
 
     fn get_timestamp() -> u64 {
         let start = SystemTime::now();
-        let since_epoch = start.duration_since(UNIX_EPOCH).expect("Time went backwards", );
-    
+        let since_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
         since_epoch.as_secs() * 1000 + since_epoch.subsec_nanos() as u64 / 1_000_000
     }
 }
@@ -160,12 +166,12 @@ mod tests {
     fn test_get_status() -> Result<(), Box<dyn std::error::Error>> {
         let mut server = TestServer::new(mockito::Server::new());
         server.create_mock(
-            "GET", 
+            "GET",
             "/public/v1/status",
-            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"# 
+            r#"{"status":0,"data":{"status":"OPEN"},"responsetime":"2019-03-19T02:15:06.001Z"}"#,
         );
 
-        let api_caller = PublicAPICaller::new(&server.url()); 
+        let api_caller = PublicAPICaller::new(&server.url());
         match api_caller.get_status() {
             Ok(status) => match status {
                 Status::Open => Ok(()),
@@ -218,9 +224,9 @@ mod tests {
     fn test_buy() -> Result<(), Box<dyn std::error::Error>> {
         let mut server = TestServer::new(mockito::Server::new());
         server.create_mock(
-            "POST", 
+            "POST",
             "/private/v1/order",
-            r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"# 
+            r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#,
         );
 
         let config = Config::new("config.toml").unwrap();
@@ -239,6 +245,4 @@ mod tests {
 
         assert_eq!(api_caller.sign(time, method, path, ""), signature);
     }
-
-
 }

@@ -36,14 +36,14 @@ fn run_command() -> Command {
 
 fn check(c: &Context) {
     let args = &c.args;
-    if args.len() == 0 {
+    if args.is_empty() {
         eprintln!("Please specify the path to the configuration file.");
         return;
     }
     let config = match Config::new(&args[0]) {
         Ok(config) => config,
         Err(error) => {
-            eprintln!("{}", error.to_string());
+            eprintln!("{}", error);
             return;
         }
     };
@@ -51,7 +51,7 @@ fn check(c: &Context) {
     let btc = match tool.check() {
         Ok(btc) => btc,
         Err(error) => {
-            eprintln!("{}", error.to_string());
+            eprintln!("{}", error);
             return;
         }
     };
@@ -60,14 +60,14 @@ fn check(c: &Context) {
 
 fn run(c: &Context) {
     let args = &c.args;
-    if args.len() == 0 {
+    if args.is_empty() {
         eprintln!("Please specify the path to the configuration file.");
         return;
     }
     let config = match Config::new(&args[0]) {
         Ok(config) => config,
         Err(error) => {
-            eprintln!("{}", error.to_string());
+            eprintln!("{}", error);
             return;
         }
     };
@@ -75,7 +75,7 @@ fn run(c: &Context) {
     let btc = match tool.run() {
         Ok(btc) => btc,
         Err(error) => {
-            eprintln!("{}", error.to_string());
+            eprintln!("{}", error);
             return;
         }
     };
