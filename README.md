@@ -20,8 +20,8 @@ $ cargo install --git https://github.com/erechorse/stashi.git
 
 Create a config.toml file to manage your settings. The following parameters are required:
 
-- secret: Your private key for the API
 - key: Your API key
+- secret: Your private key for the API
 - amount: The amount to accumulate in JPY
 
 Example config.toml:
@@ -55,7 +55,7 @@ $ stashi run /path/to/config.toml
 To run stashi once a month, add the following line to your crontab:
 
 ```
-0 6 1 * * stashi buy /path/to/config.toml
+0 6 1 * * stashi run /path/to/config.toml
 ```
 
 This will execute the accumulation on the 1st of each month at 6:00 AM.
