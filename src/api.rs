@@ -190,7 +190,7 @@ mod tests {
             r#"{"status":0,"data":{"actualProfitLoss":"68286188","availableAmount":"57262506","margin":"1021682","marginCallStatus":"NORMAL","marginRatio":"6683.6","profitLoss":"0","transferableAmount":"57262506"},"responsetime":"2019-03-19T02:15:06.051Z"}"# 
         );
 
-        let config = Config::new("config.toml")?;
+        let config = Config::new("config_example.toml")?;
         let api_caller = PrivateAPICaller::new(&config, &server.url());
         match api_caller.get_capacity() {
             Ok(capacity) => match capacity {
@@ -229,7 +229,7 @@ mod tests {
             r#"{"status":0,"data":"637000","responsetime":"2019-03-19T02:15:06.108Z"}"#,
         );
 
-        let config = Config::new("config.toml").unwrap();
+        let config = Config::new("config_example.toml").unwrap();
         let api_caller = PrivateAPICaller::new(&config, &server.url());
         api_caller.buy(0.0001)
     }
