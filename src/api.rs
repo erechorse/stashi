@@ -1,7 +1,4 @@
-use std::{
-    time::{SystemTime, UNIX_EPOCH},
-    u32,
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use ring::hmac;
 use serde::{Deserialize, Serialize};
