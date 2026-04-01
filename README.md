@@ -10,10 +10,44 @@ stashi is a CLI app that uses GMO Coin’s API to automate cryptocurrency accumu
 
 ## Installation
 
+### Using cargo
+
 Install stashi using cargo:
 
 ```bash
 $ cargo install --git https://github.com/erechorse/stashi.git
+```
+
+### Using Nix
+
+If you have Nix with flakes enabled, you can install stashi directly:
+
+```bash
+$ nix profile install github:erechorse/stashi
+```
+
+Or run it without installing:
+
+```bash
+$ nix run github:erechorse/stashi -- check /path/to/config.toml
+```
+
+You can also use it as a flake input in your own flake:
+
+```nix
+{
+  inputs.stashi.url = "github:erechorse/stashi";
+
+  outputs = { self, stashi, ... }: {
+    # Use stashi.packages.${system}.default or stashi.packages.${system}.stashi
+  };
+}
+```
+
+For development, you can use the provided devShell:
+
+```bash
+$ nix develop
 ```
 
 ## Configuration
